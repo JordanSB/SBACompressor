@@ -1,14 +1,11 @@
 package com.securebroadcast.sbacompressor;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.AsyncTask;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -16,7 +13,6 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
@@ -38,10 +34,9 @@ public class MainActivity extends AppCompatActivity {
     public static final String LOG_TAG = MainActivity.class.getSimpleName();
 
     public static final String FILE_PROVIDER_AUTHORITY = "com.securebroadcast.compressor.provider";
-    private static final int MY_PERMISSIONS_REQUEST_WRITE_STORAGE_VID = 2;
+    private static final int MY_PERMISSIONS_REQUEST_WRITE_STORAGE_VID = 1;
     private static final int REQUEST_TAKE_VIDEO = 200;
-    private static final int TYPE_IMAGE = 1;
-    private static final int TYPE_VIDEO = 2;
+    private static final int TYPE_VIDEO = 1;
 
     String mCurrentPhotoPath;
     Uri capturedUri = null;
@@ -67,20 +62,14 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Request Permission for writing to External Storage in 6.0 and up
-     */
+    //Request Permission for writing to External Storage in 6.0 and up
     private void requestPermissions(int mediaType) {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    MY_PERMISSIONS_REQUEST_WRITE_STORAGE_VID);
-
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_WRITE_STORAGE_VID);
         } else {
             dispatchTakeVideoIntent();
         }
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
@@ -90,8 +79,7 @@ public class MainActivity extends AppCompatActivity {
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     dispatchTakeVideoIntent();
                 } else {
-                    Toast.makeText(this, "You need to enable the permission for External Storage Write" +
-                            " to test out this library.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "You need to enable the permission for External Storage Write", Toast.LENGTH_LONG).show();
                     return;
                 }
                 break;
@@ -101,21 +89,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private File createMediaFile(int type) throws IOException {
-
         // Create an image file name
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String fileName = (type == TYPE_IMAGE) ? "JPEG_" + timeStamp + "_" : "VID_" + timeStamp + "_";
-        File storageDir = Environment.getExternalStoragePublicDirectory(
-                type == TYPE_IMAGE ? Environment.DIRECTORY_PICTURES : Environment.DIRECTORY_MOVIES);
-        File file = File.createTempFile(
-                fileName,  /* prefix */
-                type == TYPE_IMAGE ? ".jpg" : ".mp4",         /* suffix */
-                storageDir      /* directory */
-        );
+        String timeStamp = new SimpleDateFormat("ddMMyyyy_HHmmss", Locale.UK).format(new Date());
+        String fileName = "VID_" + timeStamp;
+        File storageDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
+        File file = File.createTempFile( fileName, ".mp4", storageDir );
 
         // Get the path of the file created
         mCurrentPhotoPath = file.getAbsolutePath();
-        Log.d(LOG_TAG, "mCurrentPhotoPath: " + mCurrentPhotoPath);
         return file;
     }
 
@@ -127,12 +108,9 @@ public class MainActivity extends AppCompatActivity {
 
                 takeVideoIntent.putExtra(MediaStore.EXTRA_DURATION_LIMIT, 10);
                 takeVideoIntent.putExtra(MediaStore.EXTRA_VIDEO_QUALITY, 1);
-                capturedUri = FileProvider.getUriForFile(this,
-                        FILE_PROVIDER_AUTHORITY,
-                        createMediaFile(TYPE_VIDEO));
+                capturedUri = FileProvider.getUriForFile(this, FILE_PROVIDER_AUTHORITY, createMediaFile(TYPE_VIDEO));
 
                 takeVideoIntent.putExtra(MediaStore.EXTRA_OUTPUT, capturedUri);
-                Log.d(LOG_TAG, "VideoUri: " + capturedUri.toString());
                 startActivityForResult(takeVideoIntent, REQUEST_TAKE_VIDEO);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -158,7 +136,6 @@ public class MainActivity extends AppCompatActivity {
 
             }
         }
-
     }
 
 
@@ -181,14 +158,11 @@ public class MainActivity extends AppCompatActivity {
         protected String doInBackground(String... paths) {
             String filePath = null;
             try {
-
                 filePath = SiliCompressor.with(mContext).compressVideo(paths[0], paths[1]);
-
             } catch (URISyntaxException e) {
                 e.printStackTrace();
             }
             return filePath;
-
         }
 
 
@@ -209,6 +183,4 @@ public class MainActivity extends AppCompatActivity {
             Log.i("Silicompressor", "Path: " + compressedFilePath);
         }
     }
-
-
 }
